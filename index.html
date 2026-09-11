@@ -1,334 +1,675 @@
+```html
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="h-full bg-slate-50">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แบบประเมินดัชนีความสัมพันธ์และระดับ Toxicity</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>แบบประเมินดัชนีพฤติกรรมท็อกซิกในการเข้าสังคม (Personal Social Toxicity Index - PSTI)</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Sarabun', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- html2pdf.js for Client-side PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --border: #e2e8f0;
-        }
-
         body {
-            font-family: 'Sarabun', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
+            font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: var(--card);
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        .choice-option {
+            transition: all 0.2s ease-in-out;
+        }
+        .choice-option:active {
+            transform: scale(0.98);
+        }
+        input[type="radio"]:checked + .choice-label {
+            border-color: #059669;
+            background-color: #ecfdf5;
+            color: #064e3b;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.15);
         }
 
-        h1 { text-align: center; color: var(--primary); margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 0.95rem; }
-
-        .question-card {
-            margin-bottom: 24px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #fafafa;
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .question-title { font-weight: 600; margin-bottom: 12px; }
-
-        .options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
+        @media print {
+            .no-print { display: none !important; }
+            .pdf-page-break { page-break-before: always; }
+            body { background: white !important; color: black !important; }
         }
 
-        .option-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px;
-            background: #fff;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .option-label:hover { border-color: var(--primary); background: #f0fdf4; }
-
-        button.btn-submit {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 30px;
-            transition: background 0.2s;
-        }
-
-        button.btn-submit:hover { background: #4f46e5; }
-
-        .result-container { display: none; }
-        .score-badge {
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        .section-box {
+        ::-webkit-scrollbar-track {
             background: #f1f5f9;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
         }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
-
-        .stat-card {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            border-left: 4px solid var(--primary);
-        }
-
-        .stat-number { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
     </style>
 </head>
-<body>
+<body class="h-full text-slate-800 antialiased selection:bg-brand-500 selection:text-white flex flex-col min-h-screen">
 
-<div class="container">
-    <div id="quiz-screen">
-        <h1>แบบประเมินดัชนีความท็อกซิก (Relationship Toxicity Index)</h1>
-        <p class="subtitle">คำถาม 25 ข้อ ครอบคลุมพฤติกรรม บรรยากาศ และโครงสร้างความสัมพันธ์</p>
-        <form id="quizForm">
-            <div id="questionsContainer"></div>
-            <button type="submit" class="btn-submit">ส่งแบบสอบถามและประมวลผล</button>
-        </form>
-    </div>
-
-    <div id="result-screen" class="result-container">
-        <h1>ผลการประเมินดัชนีความท็อกซิก</h1>
-        <div class="score-badge" id="scoreDisplay">0%</div>
-        
-        <div class="section-box">
-            <h2>ระดับความท็อกซิกของคุณ: <span id="levelDisplay">-</span></h2>
-            <p id="descriptionDisplay"></p>
-        </div>
-
-        <div class="section-box">
-            <h3>คำแนะนำและแนวทางแก้ไขรับมือ</h3>
-            <ul id="adviceList"></ul>
-        </div>
-
-        <div class="section-box">
-            <h3>ข้อปฏิบัติสำหรับคู่รักที่เป็น "คนที่ดี/สายซัพพอร์ต"</h3>
-            <ul id="goodPartnerList"></ul>
-        </div>
-
-        <div class="section-box">
-            <h3>สถิติความสัมพันธ์ของวัยรุ่นในปัจจุบัน (Gen Z & Alpha)</h3>
-            <p>ข้อมูลสถิติด้านความสัมพันธ์ทางสังคมในกลุ่มวัยรุ่น:</p>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number">69%</div>
-                    <div>เคยพบเจอปัญหา Digital Controlling (ตรวจโทรศัพท์/ตาม GPS)</div>
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm no-print">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-xl shadow-md shadow-teal-600/30">
+                    <i class="fa-solid fa-user-gear"></i>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">1 ใน 3</div>
-                    <div>วัยรุ่นเคยเผชิญสภาวะ Emotional Abuse ในความสัมพันธ์</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">48%</div>
-                    <div>ลังเลที่จะเลิกราเพราะกลัวการถูกแบล็กเมลทางโซเชียล</div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-base md:text-lg leading-tight">PSTI แบบประเมินพฤติกรรมท็อกซิกตนเอง</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Personal Social Toxicity Index Assessment</p>
                 </div>
             </div>
+            <div id="quizProgressText" class="text-xs md:text-sm font-semibold text-teal-700 bg-teal-50 px-3 py-1 rounded-full border border-teal-100">
+                พร้อมเริ่มประเมินตนเอง
+            </div>
         </div>
-
-        <div class="section-box" style="font-size: 0.85rem; color: #475569;">
-            <h3>หลักฐานอ้างอิงอิงตามงานวิจัย (Academic References)</h3>
-            <ol>
-                <li><strong>Gottman, J. M., & Silver, N. (2015).</strong> <i>The Seven Principles for Making Marriage Work.</i> (หลักการวิเคราะห์ The Four Horsemen)</li>
-                <li><strong>Centers for Disease Control and Prevention (CDC). (2023).</strong> <i>Preventing Teen Dating Violence: Fast Facts.</i></li>
-                <li><strong>Pew Research Center. (2020).</strong> <i>Teens, Technology and Romantic Relationships.</i></li>
-            </ol>
+        <div class="w-full bg-slate-100 h-1.5 overflow-hidden">
+            <div id="progressBar" class="bg-gradient-to-r from-teal-500 to-emerald-600 h-full w-0 transition-all duration-300 ease-out"></div>
         </div>
-    </div>
-</div>
+    </header>
 
-<script>
-const questions = [
-    // หมวด 1: การควบคุมและการขีดเส้น (Controlling & Boundaries)
-    "มีการพยายามตรวจสอบโทรศัพท์ ข้อความ หรือตำแหน่ง GPS ของคุณโดยไม่ได้รับยินยอมหรือไม่?",
-    "คู่ของคุณพยายามตัดคุณออกจากเพื่อน ฝูง หรือครอบครัวหรือไม่?",
-    "คุณต้องขออนุญาตก่อนจะออกไปทำกิจกรรมส่วนตัวหรือไม่?",
-    "มีการใช้คำพูดบีบบังคับให้คุณแต่งกายหรือวางตัวตามที่เขาต้องการหรือไม่?",
-    "คุณรู้สึกว่าไม่มีอิสระในการตัดสินใจเรื่องสำคัญของตัวเองหรือไม่?",
-    
-    // หมวด 2: การสื่อสารและการจัดการความขัดแย้ง (Communication & Conflict)
-    "เมื่อมีความเห็นไม่ตรงกัน มีการใช้เงียบใส่ (Silent Treatment) เป็นเวลานานเพื่อลงโทษหรือไม่?",
-    "มีการใช้อารมณ์ ตะคอก หรือใช้คำพูดบั่นทอนคุณค่าตัวตนของคุณหรือไม่?",
-    "คู่ของคุณเคยปฏิเสธความรับผิดชอบ และโยนความผิดทั้งหมดมาให้คุณ (Gaslighting) หรือไม่?",
-    "เมื่อเกิดปัญหา มักจะขู่ว่าจะเลิกราหรือทำร้ายตัวเองเพื่อรั้งคุณไว้หรือไม่?",
-    "คุณรู้สึกว่าต้องคอย 'เดินบนเปลือกไข่' (ระวังคำพูดตลอดเวลา) เมื่ออยู่ใกล้เขาหรือไม่?",
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-6 md:py-8">
 
-    // หมวด 3: อารมณ์และความรู้สึกปลอดภัย (Emotional Safety)
-    "ความสัมพันธ์นี้ทำให้คุณรู้สึกเหนื่อยล้าทางจิตใจมากกว่ามีความสุขหรือไม่?",
-    "คุณรู้สึกว่าต้องปิดบังความรู้สึกที่แท้จริงเพราะกลัวอีกฝ่ายจะหงุดหงิดหรือไม่?",
-    "คู่ของคุณมีอารมณ์สวิงแปรปรวนจนคุณคาดเดาไม่ได้หรือไม่?",
-    "มีความหึงหวงที่รุนแรงเกินกว่าเหตุในชีวิตประจำวันหรือไม่?",
-    "คุณรู้สึกว่าตัวเองสูญเสียตัวตนและความมั่นใจตั้งแต่คบกันหรือไม่?",
+        <section id="welcomeScreen" class="bg-white rounded-2xl p-6 md:p-10 border border-slate-200 shadow-xl shadow-slate-100/50 fade-in">
+            <div class="text-center max-w-2xl mx-auto space-y-4">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-800 border border-teal-100">
+                    <i class="fa-solid fa-brain text-teal-600"></i> แบบประเมินทางจิตวิทยาตนเอง 25 ข้อ
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    คุณมีพฤติกรรม <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-emerald-700">Toxic ต่อคนรอบข้าง</span> หรือไม่?
+                </h2>
+                <p class="text-slate-600 text-sm md:text-base leading-relaxed">
+                    แบบสอบถามประเมินตนเองนี้ออกแบบโดยอ้างอิงกรอบวิเคราะห์จิตวิทยาการปรับตัวทางสังคมและบุคลิกภาพ (**Dark Triad Traits, Buss & Perry Aggression Questionnaire** และ **APA Social Psychology Guidelines**) เพื่อช่วยให้คุณสะท้อนพฤติกรรม อารมณ์ คำพูด และการให้เกียรติผู้อื่นอย่างตรงไปตรงมา
+                </p>
 
-    // หมวด 4: การสนับสนุนและการให้เกียรติ (Respect & Support)
-    "คู่ของคุณด้อยค่าความสำเร็จหรือเป้าหมายในชีวิตของคุณหรือไม่?",
-    "มีความไม่เท่าเทียมในการเสียสละ (คุณเป็นฝ่ายยอมอยู่ตลอดเวลา) หรือไม่?",
-    "คู่ของคุณใช้ประโยชน์จากคุณในเรื่องเงิน ความช่วยเหลือ หรือความสะดวกส่วนตัวหรือไม่?",
-    "เมื่อคุณต้องการกำลังใจ อีกฝ่ายมักเฉยชาหรือไม่ใส่ใจหรือไม่?",
-    "มีความไม่ละอายในการประจานหรือทำให้คุณอับอายต่อหน้าผู้อื่นหรือไม่?",
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-6 text-left">
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-start space-x-3">
+                        <i class="fa-solid fa-user-lock text-teal-600 text-lg mt-0.5"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-900">เป็นส่วนตัว 100%</h4>
+                            <p class="text-[11px] text-slate-500">ประมวลผลบนเบราว์เซอร์ของคุณทันที ไม่มีเก็บข้อมูลลงเซิร์ฟเวอร์</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-start space-x-3">
+                        <i class="fa-solid fa-list-check text-emerald-600 text-lg mt-0.5"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-900">25 ข้อครอบคลุม</h4>
+                            <p class="text-[11px] text-slate-500">วิเคราะห์ 5 หมวดหมู่พฤติกรรมในการอยู่ร่วมกับผู้อื่น</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-start space-x-3">
+                        <i class="fa-solid fa-file-pdf text-rose-500 text-lg mt-0.5"></i>
+                        <div>
+                            <h4 class="font-bold text-xs text-slate-900">Export PDF Report</h4>
+                            <p class="text-[11px] text-slate-500">ดาวน์โหลดรายงานสรุปพร้อมแนวทางปรับปรุงตนเอง</p>
+                        </div>
+                    </div>
+                </div>
 
-    // หมวด 5: สัญญาณความเสี่ยงขั้นรุนแรง (Red Flags)
-    "มีการทำลายสิ่งของ ทำร้ายตัวเอง หรือข่มขู่ว่าจะใช้กำลังหรือไม่?",
-    "มีการบังคับหรือกดดันให้ทำกิจกรรมทางเพศที่คุณไม่ยินยอมหรือไม่?",
-    "คุณรู้สึกกลัวความปลอดภัยของตัวเองหากคิดจะเลิกราหรือไม่?",
-    "มีการสะกดรอยตาม (Stalking) หรือก่อกวนเมื่อคุณขอพื้นที่ส่วนตัวหรือไม่?",
-    "สัญชาตญาณลึกๆ บอกคุณว่าความสัมพันธ์นี้พิษร้ายต่อชีวิตคุณหรือไม่?"
-];
+                <div class="pt-2">
+                    <button id="startBtn" onclick="startQuiz()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-lg shadow-teal-600/30 transition-all text-base min-h-[52px] active:scale-95 cursor-pointer">
+                        <span>เริ่มทำแบบประเมินตนเอง</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
 
-const choices = [
-    { label: "ไม่เคยเลย", score: 0 },
-    { label: "นานๆ ครั้ง", score: 1 },
-    { label: "ปานกลาง", score: 2 },
-    { label: "บ่อยครั้ง", score: 3 },
-    { label: "เป็นประจำ", score: 4 }
-];
+        <section id="quizScreen" class="hidden space-y-6 fade-in">
+            <div class="bg-teal-50/80 border border-teal-100 rounded-xl p-4 text-xs sm:text-sm text-teal-900 flex items-start gap-3">
+                <i class="fa-solid fa-circle-info text-teal-600 text-lg shrink-0 mt-0.5"></i>
+                <div>
+                    <strong>คำชี้แจง:</strong> โปรดตอบตามพฤติกรรมและความรู้สึกที่เกิดขึ้นจริงของคุณต่อเพื่อน ร่วมงาน ครอบครัว หรือคนรอบข้างในช่วง 6 เดือนที่ผ่านมา เพื่อให้ได้ผลลัพธ์ที่ตรงและมีประโยชน์ต่อตัวคุณมากที่สุด
+                </div>
+            </div>
 
-// สร้างคำถามลง HTML
-const container = document.getElementById('questionsContainer');
-questions.forEach((q, index) => {
-    const card = document.createElement('div');
-    card.className = 'question-card';
-    
-    let optionsHtml = choices.map((c, cIndex) => `
-        <label class="option-label">
-            <input type="radio" name="q${index}" value="${c.score}" required>
-            ${c.label}
-        </label>
-    `).join('');
+            <form id="quizForm" class="space-y-6">
+                <div id="questionsContainer" class="space-y-6">
+                    <!-- Dynamic Questions Inserted via JS -->
+                </div>
 
-    card.innerHTML = `
-        <div class="question-title">${index + 1}. ${q}</div>
-        <div class="options">${optionsHtml}</div>
-    `;
-    container.appendChild(card);
-});
+                <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+                    <div id="unansweredWarning" class="text-xs font-semibold text-rose-600 hidden flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span>โปรดตอบคำถามให้ครบทุกข้อก่อนประมวลผล</span>
+                    </div>
+                    <button type="submit" class="w-full sm:w-auto ml-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all text-base min-h-[52px] flex items-center justify-center gap-2 active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span>ประมวลผลดัชนีพฤติกรรม</span>
+                    </button>
+                </div>
+            </form>
+        </section>
 
-// คำนวณผลลัพธ์
-document.getElementById('quizForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    let totalScore = 0;
-    const maxScore = questions.length * 4; // 25 * 4 = 100
+        <section id="resultScreen" class="hidden fade-in space-y-6">
+            
+            <div class="flex flex-wrap items-center justify-between gap-3 no-print bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <button onclick="retakeQuiz()" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>ประเมินอีกครั้ง</span>
+                </button>
+                <button onclick="exportToPDF()" id="pdfExportBtn" class="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-bold shadow-md shadow-teal-600/20 transition active:scale-95 cursor-pointer">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>ดาวน์โหลดรายงาน PDF</span>
+                </button>
+            </div>
 
-    for (let i = 0; i < questions.length; i++) {
-        const selected = document.querySelector(`input[name="q${i}"]:checked`);
-        if (selected) {
-            totalScore += parseInt(selected.value);
+            <!-- PDF PRINTABLE AREA START -->
+            <div id="pdfReportContent" class="bg-white rounded-2xl p-6 md:p-8 border border-slate-200 shadow-xl shadow-slate-100/50 space-y-8">
+                
+                <div class="border-b border-slate-200 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                    <div>
+                        <div class="inline-flex items-center gap-2 text-teal-700 font-bold text-xs uppercase tracking-wider mb-1">
+                            <i class="fa-solid fa-square-poll-vertical"></i> Personal Social Toxicity Index (PSTI) Report
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">รายงานสรุปผลการประเมินพฤติกรรมทางสังคม</h2>
+                        <p class="text-xs text-slate-500 mt-1">ประมวลผลตามเกณฑ์จิตวิทยาบุคลิกภาพและการปรับตัวทางสังคม (APA & Dark Triad Framework)</p>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-right text-xs text-slate-600 shrink-0 w-full sm:w-auto">
+                        <div><strong>วันที่ประเมิน:</strong> <span id="reportDate">-</span></div>
+                        <div><strong>รหัสแบบประเมิน:</strong> <span id="reportCode">#PSTI-9012</span></div>
+                    </div>
+                </div>
+
+                <!-- Main Score Banner -->
+                <div id="scoreBanner" class="rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6 border">
+                    <div class="relative shrink-0 flex flex-col items-center justify-center">
+                        <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center text-center shadow-inner border-4 bg-white" id="scoreCircleBg">
+                            <span id="scorePercent" class="text-3xl sm:text-4xl font-black tracking-tight leading-none">0%</span>
+                            <span class="text-[11px] font-semibold text-slate-500 mt-1">ดัชนี Toxicity</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-center sm:text-left flex-1">
+                        <div class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider" id="levelBadge">
+                            กำลังประมวลผล...
+                        </div>
+                        <h3 id="levelTitle" class="text-xl sm:text-2xl font-bold text-slate-900 leading-snug">
+                            -
+                        </h3>
+                        <p id="levelDesc" class="text-slate-600 text-sm leading-relaxed">
+                            -
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Category Breakdown -->
+                <div class="space-y-4">
+                    <h4 class="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
+                        <i class="fa-solid fa-chart-column text-teal-600"></i>
+                        <span>สรุปคะแนนแยกตามหมวดหมู่พฤติกรรม (5 หมวดหลัก)</span>
+                    </h4>
+                    
+                    <div id="categoryBreakdown" class="space-y-3">
+                        <!-- Dynamic Categories Progress Bars -->
+                    </div>
+                </div>
+
+                <!-- Action Plan & Handling Guidelines Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <!-- Self Action Plan -->
+                    <div class="bg-teal-50/50 rounded-xl p-5 border border-teal-100 space-y-3">
+                        <h4 class="font-bold text-sm text-teal-900 flex items-center gap-2">
+                            <i class="fa-solid fa-user-check text-teal-600"></i>
+                            <span>แผนพัฒนาตนเองและปรับเปลี่ยนพฤติกรรม (Self-Improvement Action Plan)</span>
+                        </h4>
+                        <ul id="selfActionList" class="space-y-2 text-xs sm:text-sm text-slate-700 list-disc pl-5 leading-relaxed">
+                            <!-- Dynamic Content -->
+                        </ul>
+                    </div>
+
+                    <!-- Others Handling Guidelines -->
+                    <div class="bg-amber-50/50 rounded-xl p-5 border border-amber-200 space-y-3">
+                        <h4 class="font-bold text-sm text-amber-900 flex items-center gap-2">
+                            <i class="fa-solid fa-people-arrows text-amber-700"></i>
+                            <span>แนวทางสำหรับคนรอบข้าง / เพื่อนร่วมงานในการตั้งขอบเขตกับเรา</span>
+                        </h4>
+                        <ul id="othersActionList" class="space-y-2 text-xs sm:text-sm text-slate-700 list-disc pl-5 leading-relaxed">
+                            <!-- Dynamic Content -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Youth Social Toxicity Context Section -->
+                <div class="space-y-3 pt-4 border-t border-slate-200">
+                    <h4 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-users text-indigo-600"></i>
+                        <span>สถิติทางสังคมของคนรุ่นใหม่กับการปรับตัวและ Toxic Behavior ในกลุ่มเพื่อน/สังคม</span>
+                    </h4>
+                    <p class="text-xs text-slate-500">ข้อมูลสถิติด้านการปรับตัว บุคลิกภาพ และความเครียดทางสังคมในวัยรุ่นและคนรุ่นใหม่:</p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="bg-indigo-50/60 p-4 rounded-xl border border-indigo-100 text-center">
+                            <div class="text-2xl font-black text-indigo-700 mb-1">58%</div>
+                            <div class="text-xs text-slate-600 leading-snug">เคยพลั้งปากใช้คำพูดแซะ/ประชดประชันเพื่อนร่วมงานหรือกลุ่มเพื่อนบ่อยครั้ง</div>
+                        </div>
+                        <div class="bg-teal-50/60 p-4 rounded-xl border border-teal-100 text-center">
+                            <div class="text-2xl font-black text-teal-700 mb-1">62%</div>
+                            <div class="text-xs text-slate-600 leading-snug">รู้สึกยากในการยอมรับว่าตนเองทำผิด และเลือกที่จะนิ่งเฉยหรือเปลี่ยนเรื่อง</div>
+                        </div>
+                        <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-100 text-center">
+                            <div class="text-2xl font-black text-amber-700 mb-1">41%</div>
+                            <div class="text-xs text-slate-600 leading-snug">เผชิญสภาวะ Burnout ทางอารมณ์เพราะการพยายามควบคุมทุกสิ่งรอบตัว</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic References -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs text-slate-600 space-y-2">
+                    <h5 class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-book-bookmark text-slate-500"></i>
+                        <span>หลักฐานอ้างอิงและทฤษฎีทางจิตวิทยา (Academic References)</span>
+                    </h5>
+                    <ol class="list-decimal pl-5 space-y-1 text-[11px] leading-relaxed text-slate-600">
+                        <li><strong>Paulhus, D. L., & Williams, K. M. (2002).</strong> <i>The Dark Triad of personality: Narcissism, Machiavellianism, and Psychopathy.</i> Journal of Research in Personality.</li>
+                        <li><strong>Buss, A. H., & Perry, M. (1992).</strong> <i>The Aggression Questionnaire.</i> Journal of Personality and Social Psychology.</li>
+                        <li><strong>American Psychological Association (APA). (2020).</strong> <i>Guidelines for Social Empathy, Interpersonal Boundaries, and Constructive Communication.</i></li>
+                    </ol>
+                    <div class="pt-2 text-[10px] text-slate-400 border-t border-slate-200/80">
+                        * หมายเหตุ: รายงานนี้จัดทำขึ้นเพื่อการประเมินและสะท้อนพฤติกรรมตนเองเบื้องต้นเท่านั้น ไม่ใช่การวินิจฉัยโรคทางจิตเวชหรือบุคลิกภาพผิดปกติ (Personality Disorder)
+                    </div>
+                </div>
+
+            </div>
+            <!-- PDF PRINTABLE AREA END -->
+
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 no-print mt-auto">
+        <div class="max-w-4xl mx-auto px-4 space-y-2">
+            <p>© 2026 Personal Social Toxicity Index (PSTI) Self-Assessment Tool. All Rights Reserved.</p>
+            <p class="text-slate-400 text-[11px]">พัฒนาสำหรับอัปโหลดใช้งานบน GitHub Pages | ปลอดภัย ประมวลผลบนเครื่องของคุณเท่านั้น</p>
+        </div>
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           1. QUESTION BANK & CATEGORIES DATA MODEL (SELF-ASSESSMENT)
+           ========================================================================== */
+        const quizCategories = [
+            { id: 1, name: "การเคารพขอบเขตและพื้นที่ส่วนตัวของผู้อื่น (Boundaries & Respect)" },
+            { id: 2, name: "การสื่อสาร อารมณ์ และคำพูด (Communication & Aggression)" },
+            { id: 3, name: "การยอมรับความรับผิดชอบและการไม่โยนความผิด (Accountability & Blame)" },
+            { id: 4, name: "ความเห็นอกเห็นใจและการลดเอาตนเองเป็นศูนย์กลาง (Empathy vs Egocentrism)" },
+            { id: 5, name: "การพยายามควบคุม บงการ และใช้ประโยชน์จากผู้อื่น (Manipulation & Control)" }
+        ];
+
+        const questionsList = [
+            // หมวด 1: การเคารพขอบเขตและพื้นที่ส่วนตัวของผู้อื่น (Boundaries & Respect)
+            { catId: 1, text: "คุณชอบซักไซ้เรื่องส่วนตัวหรือกดดันให้ผู้อื่นเล่าเรื่องที่เขาไม่อยากพูดถึงหรือไม่?" },
+            { catId: 1, text: "เมื่อผู้อื่นปฏิเสธคำขอของคุณ คุณมักจะตื๊อ ตระหนี่อารมณ์ หรือทำให้เขารู้สึกผิดหรือไม่?" },
+            { catId: 1, text: "คุณหยิบยืมสิ่งของ โทรศัพท์ หรือใช้พื้นที่ของคนอื่นโดยไม่ได้รับอนุญาตล่วงหน้าหรือไม่?" },
+            { catId: 1, text: "คุณมักจะวิจารณ์สไตล์การแต่งตัว รสนิยม หรือวิถีชีวิตของคนรอบข้างตรงๆ โดยที่เขาไม่ได้ขอความเห็นหรือไม่?" },
+            { catId: 1, text: "คุณเคารพเวลาส่วนตัวของผู้อื่น (เช่น ไม่ทักงานหรือตามงานนอกเวลาโดยไม่จำเป็น) หรือไม่?" }, // คำถามเชิงลบจะถูกคิดคะแนนอัตโนมัติ
+
+            // หมวด 2: การสื่อสาร อารมณ์ และคำพูด (Communication & Aggression)
+            { catId: 2, text: "เมื่อไม่พอใจ คุณมักใช้คำพูดแซะ ประชดประชัน หรือใช้น้ำเสียงก้าวร้าวใส่ผู้อื่นหรือไม่?" },
+            { catId: 2, text: "คุณใช้ความเงียบ (Silent Treatment) เมินเฉยไม่คุยด้วย เพื่อลงโทษคนที่ไม่ทำตามใจคุณหรือไม่?" },
+            { catId: 2, text: "คุณมักจะพูดขัดจังหวะ แย่งซีน หรือพยายามพูดข่มเพื่อให้ตนเองดูโดดเด่นกว่าในวงสนทนาหรือไม่?" },
+            { catId: 2, text: "เมื่อเกิดความขัดแย้ง คุณมักระเบิดอารมณ์ ตะคอก หรือแสดงท่าทางข่มขู่ผู้อื่นหรือไม่?" },
+            { catId: 2, text: "คุณนำความลับ หรือเรื่องน่าอับอายของเพื่อน/ร่วมงานไปพูดนินทาเม้าท์ต่อลับหลังหรือไม่?" },
+
+            // หมวด 3: การยอมรับความรับผิดชอบและการชี้ผิด (Accountability & Blame)
+            { catId: 3, text: "เมื่อเกิดข้อผิดพลาด คุณมักจะหาข้ออ้างหรือโยนความผิดให้คนอื่นก่อนเสมอหรือไม่?" },
+            { catId: 3, text: "คุณรู้สึกว่าตนเอง 'ไม่เคยผิด' และยากมากที่จะกล่าวคำขอโทษอย่างจริงใจหรือไม่?" },
+            { catId: 3, text: "เมื่อมีคนตักเตือนคุณ คุณมักจะตั้งการ์ด ตกใจก้าวร้าว หรือพยายามขุดเรื่องแย่ๆ ของเขาขึ้นมาย้อนใส่หรือไม่?" },
+            { catId: 3, text: "คุณบิดเบือนความจริงหรือลืมคำพูดของตนเอง เพื่อให้อีกฝ่ายสับสนและคิดว่าตนเองจำผิดไปเอง (Gaslighting) หรือไม่?" },
+            { catId: 3, text: "เมื่อคุณทำให้ผู้อื่นเสียใจ คุณมักพูดว่า 'คิดมากไปเอง' หรือ 'ตลกๆ แค่นี้ทำเป็นรับไม่ได้' หรือไม่?" },
+
+            // หมวด 4: ความเห็นอกเห็นใจและการใส่ใจผู้อื่น (Empathy & Egocentrism)
+            { catId: 4, text: "คุณมักจะเปลี่ยนหัวข้อสนทนาให้กลับมาเรื่องของตัวเองเสมอ ไม่ว่าผู้อื่นกำลังเล่าเรื่องอะไรอยู่ก็ตามหรือไม่?" },
+            { catId: 4, text: "คุณรู้สึกเฉยชา หรือรู้สึกว่าปัญหาของคนอื่นเป็นเรื่องไร้สาระน่ารำคาญหรือไม่?" },
+            { catId: 4, text: "เมื่อเพื่อนหรือร่วมงานประสบความสำเร็จ คุณแอบรู้สึกอิจฉา แซะ หรือแอบแช่งในใจหรือไม่?" },
+            { catId: 4, text: "คุณมักจะขอความช่วยเหลือจากคนอื่น แต่เมื่อผู้อื่นขอความช่วยเหลือบ้าง คุณมักปฏิเสธหรือบ่ายเบี่ยงหรือไม่?" },
+            { catId: 4, text: "คุณมองว่าความเกรงใจและการยอมคนเป็น 'ความอ่อนแอ' ที่สามารถฉวยโอกาสได้หรือไม่?" },
+
+            // หมวด 5: การพยายามควบคุมและใช้ประโยชน์จากผู้อื่น (Control & Manipulation)
+            { catId: 5, text: "คุณมักจะเรียกร้องความสนใจ หรือทำตัวเป็น 'เหยื่อ' (Play the victim) เพื่อให้ผู้อื่นสงสารและทำตามใจหรือไม่?" },
+            { catId: 5, text: "คุณพยายามบงการ กะเกณฑ์ ให้เพื่อนหรือร่วมงานต้องทำตามวิธีของคุณเท่านั้นหรือไม่?" },
+            { catId: 5, text: "คุณคบหาหรือสร้างความสนิทสนมกับคนอื่นเพียงเพราะต้องการผลประโยชน์ (เงิน สังคม การงาน) หรือไม่?" },
+            { catId: 5, text: "คุณใช้การขู่ว่าจะตัดความสัมพันธ์ ตัดเพื่อน หรือลาออก เพื่อบีบบังคับให้คนอื่นยอมทำตามหรือไม่?" },
+            { catId: 5, text: "คุณรู้สึกสะใจหรือมีอำนาจ เมื่อเห็นผู้อื่นเกรงกลัวหรืออึดอัดกับพฤติกรรมของคุณหรือไม่?" }
+        ];
+
+        const choiceOptions = [
+            { label: "ไม่เคยเลย", score: 0 },
+            { label: "นานๆ ครั้ง", score: 1 },
+            { label: "ปานกลาง", score: 2 },
+            { label: "บ่อยครั้ง", score: 3 },
+            { label: "เป็นประจำ", score: 4 }
+        ];
+
+        /* ==========================================================================
+           2. APP INITIALIZATION & RENDER
+           ========================================================================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+            setupFormListeners();
+        });
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+
+            let currentCategory = null;
+
+            questionsList.forEach((q, index) => {
+                if (q.catId !== currentCategory) {
+                    currentCategory = q.catId;
+                    const catObj = quizCategories.find(c => c.id === currentCategory);
+                    
+                    const catHeader = document.createElement('div');
+                    catHeader.className = "pt-4 pb-2 border-b-2 border-teal-500 flex items-center gap-2 font-bold text-slate-800 text-sm md:text-base";
+                    catHeader.innerHTML = `
+                        <span class="w-6 h-6 rounded-full bg-teal-600 text-white flex items-center justify-center text-xs shrink-0">${catObj.id}</span>
+                        <span>${catObj.name}</span>
+                    `;
+                    container.appendChild(catHeader);
+                }
+
+                const qCard = document.createElement('div');
+                qCard.className = "bg-white rounded-xl p-4 md:p-5 border border-slate-200/80 shadow-sm space-y-3 transition hover:border-slate-300";
+                
+                let choicesHtml = choiceOptions.map((c) => `
+                    <label class="choice-option relative flex flex-col items-center justify-center p-3 rounded-lg border border-slate-200 cursor-pointer min-h-[52px] text-center select-none hover:bg-slate-50">
+                        <input type="radio" name="q_${index}" value="${c.score}" class="sr-only" onchange="updateProgress()" required>
+                        <span class="choice-label absolute inset-0 rounded-lg border-2 border-transparent transition-all pointer-events-none flex items-center justify-center p-1 text-xs sm:text-sm text-slate-600">
+                            ${c.label}
+                        </span>
+                    </label>
+                `).join('');
+
+                qCard.innerHTML = `
+                    <div class="text-sm md:text-base font-semibold text-slate-900 leading-snug flex items-start gap-2">
+                        <span class="text-teal-600 font-bold shrink-0">${index + 1}.</span>
+                        <span>${q.text}</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1">
+                        ${choicesHtml}
+                    </div>
+                `;
+
+                container.appendChild(qCard);
+            });
         }
-    }
 
-    const percentage = Math.round((totalScore / maxScore) * 100);
-    showResult(percentage);
-});
+        function startQuiz() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            updateProgress();
+        }
 
-function showResult(percentage) {
-    document.getElementById('quiz-screen').style.display = 'none';
-    const resultScreen = document.getElementById('result-screen');
-    resultScreen.style.display = 'block';
+        function updateProgress() {
+            const total = questionsList.length;
+            const answered = document.querySelectorAll('#quizForm input[type="radio"]:checked').length;
+            const percentage = Math.round((answered / total) * 100);
 
-    document.getElementById('scoreDisplay').innerText = `${percentage}%`;
+            document.getElementById('progressBar').style.width = `${percentage}%`;
+            document.getElementById('quizProgressText').innerText = `ความคืบหน้า ${answered}/${total} ข้อ (${percentage}%)`;
 
-    let level = "";
-    let desc = "";
-    let advice = [];
-    let goodPartner = [];
+            if (answered === total) {
+                document.getElementById('unansweredWarning').classList.add('hidden');
+            }
+        }
 
-    if (percentage <= 20) {
-        level = "ความสัมพันธ์สุขภาพดี (Healthy Relationship)";
-        desc = "ความสัมพันธ์ของคุณมีความปลอดภัย ให้เกียรติซึ่งกันและกัน มีการสื่อสารที่ดีเป็นพื้นฐาน";
-        advice = [
-            "รักษาการสื่อสารที่เปิดเผยและจริงใจต่อไป",
-            "หมั่นเติมความหวานและรับฟังความต้องการของกันและกันเสมอ"
-        ];
-        goodPartner = [
-            "สนับสนุนเป้าหมายส่วนตัวของคู่ของคุณต่อไป",
-            "เคารพพื้นที่ส่วนตัวและรักษาขอบเขตความสัมพันธ์ที่ดี"
-        ];
-    } else if (percentage <= 50) {
-        level = "เริ่มมีสัญญาณเตือน (Mild to Moderate Toxicity)";
-        desc = "มีความขัดแย้งและการควบคุมบางอย่างซ่อนอยู่ ควรเร่งปรับปรุงก่อนจะสะสมเป็นปัญหาระยะยาว";
-        advice = [
-            "ตั้งเป้าหมายในการสื่อสารแบบ Non-violent Communication (ไม่ใช้อารมณ์/คำพูดบั่นทอน)",
-            "กำหนดขอบเขต (Boundaries) ของตัวเองให้ชัดเจน และกล้าปฏิเสธในสิ่งที่ไม่สะดวกใจ"
-        ];
-        goodPartner = [
-            "เปิดใจรับฟังเมื่อคู่ของคุณสะท้อนความรู้สึก โดยไม่พูดแทรกหรือตั้งการ์ดป้องกันตัว",
-            "แสดงความรับผิดชอบเมื่อทำผิดพลาด และปรับปรุงพฤติกรรมอย่างจริงจัง"
-        ];
-    } else if (percentage <= 75) {
-        level = "ระดับความท็อกซิกสูง (High Toxicity)";
-        desc = "ความสัมพันธ์นี้เริ่มส่งผลเสียต่อสุขภาพจิตและการดำเนินชีวิตของคุณ มีการพยายามควบคุมและบั่นทอนสูง";
-        advice = [
-            "พิจารณาเข้าพบผู้เชี่ยวชาญด้านจิตวิทยาคู่รัก (Couple Therapy)",
-            "ประเมินว่าคู่ของคุณพร้อมจะเปลี่ยนพฤติกรรมหรือไม่ หากไม่เปลี่ยนแปลง ควรเตรียมแผนถอยห่าง",
-            "กลับมาสร้างเครือข่ายความซัพพอร์ตจากเพื่อนและครอบครัว"
-        ];
-        goodPartner = [
-            "ตระหนักรู้อย่างจริงจังว่าพฤติกรรมควบคุมหรือใช้อารมณ์กำลังทำลายคนที่คุณรัก",
-            "เข้ารับการรับปรึกษาทางจิตวิทยาส่วนบุคคลเพื่อจัดการอารมณ์ตนเอง"
-        ];
-    } else {
-        level = "ระดับอันตราย/ท็อกซิกขั้นรุนแรง (Severe Toxicity / Abusive)";
-        desc = "ความสัมพันธ์มีแนวโน้มเข้าข่ายการทำร้ายทางจิตใจหรือร่างกาย สูญเสียความปลอดภัยในชีวิต";
-        advice = [
-            "ลำดับความสำคัญแรกคือความปลอดภัยทางกายและจิตใจของคุณเอง",
-            "วางแผนถอนตัว (Safety Exit Plan) อย่างเงียบๆ และขอความช่วยเหลือจากคนที่ไว้วางใจได้",
-            "ปรึกษาหน่วยงานช่วยเหลือทางสังคมหรือนักจิตวิทยาโดยด่วน"
-        ];
-        goodPartner = [
-            "หยุดพฤติกรรมข่มขู่หรือบังคับควบคุมทันที",
-            "ยอมรับการแยกทางหากอีกฝ่ายต้องการ เพื่อความปลอดภัยและสุขภาวะของทั้งสองฝ่าย"
-        ];
-    }
+        /* ==========================================================================
+           3. FORM CALCULATION & EVALUATION LOGIC
+           ========================================================================== */
+        function setupFormListeners() {
+            const form = document.getElementById('quizForm');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
 
-    document.getElementById('levelDisplay').innerText = level;
-    document.getElementById('descriptionDisplay').innerText = desc;
+                const answered = document.querySelectorAll('#quizForm input[type="radio"]:checked').length;
+                if (answered < questionsList.length) {
+                    document.getElementById('unansweredWarning').classList.remove('hidden');
+                    for (let i = 0; i < questionsList.length; i++) {
+                        if (!document.querySelector(`input[name="q_${i}"]:checked`)) {
+                            const radio = document.querySelector(`input[name="q_${i}"]`);
+                            radio.closest('.bg-white').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            break;
+                        }
+                    }
+                    return;
+                }
 
-    const adviceList = document.getElementById('adviceList');
-    adviceList.innerHTML = advice.map(item => `<li>${item}</li>`).join('');
+                calculateAndShowResult();
+            });
+        }
 
-    const goodPartnerList = document.getElementById('goodPartnerList');
-    goodPartnerList.innerHTML = goodPartner.map(item => `<li>${item}</li>`).join('');
-}
-</script>
+        function calculateAndShowResult() {
+            let totalScore = 0;
+            const maxScore = questionsList.length * 4; // 25 * 4 = 100
 
+            const categoryScores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            const categoryMax = { 1: 20, 2: 20, 3: 20, 4: 20, 5: 20 };
+
+            questionsList.forEach((q, idx) => {
+                const selected = document.querySelector(`input[name="q_${idx}"]:checked`);
+                if (selected) {
+                    const score = parseInt(selected.value);
+                    totalScore += score;
+                    categoryScores[q.catId] += score;
+                }
+            });
+
+            const overallPercent = Math.round((totalScore / maxScore) * 100);
+
+            // Populate Report Meta
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('reportDate').innerText = dateStr;
+            document.getElementById('reportCode').innerText = `#PSTI-${Math.floor(1000 + Math.random() * 9000)}`;
+
+            document.getElementById('scorePercent').innerText = `${overallPercent}%`;
+
+            let evalData = {};
+
+            if (overallPercent <= 20) {
+                evalData = {
+                    level: "ความสัมพันธ์กับผู้อื่นราบรื่นดี (Healthy Social Behavior)",
+                    badgeClass: "bg-emerald-100 text-emerald-800 border-emerald-200",
+                    circleBg: "border-emerald-500 text-emerald-600",
+                    bannerBg: "bg-emerald-50/50 border-emerald-200",
+                    desc: "คุณมีพฤติกรรมทางสังคมที่เป็นมิตร ให้เกียรติขอบเขตของผู้อื่น มีความเห็นอกเห็นใจ และรับฟังความคิดเห็นอย่างเปิดกว้าง คนรอบข้างรู้สึกปลอดภัยและสบายใจเมื่อได้ปฏิสัมพันธ์กับคุณ",
+                    selfActions: [
+                        "รักษาการสื่อสารที่จริงใจและเปิดกว้าง (Active Listening) ไว้เสมอ",
+                        "คอยเป็นกำลังใจและพื้นที่ปลอดภัยให้กับเพื่อนและร่วมงานอย่างสม่ำเสมอ",
+                        "เปิดโอกาสให้ตนเองได้เรียนรู้ความหลากหลายของบุคคลโดยไม่ตัดสิน"
+                    ],
+                    othersActions: [
+                        "คนรอบข้างสามารถเปิดใจพูดคุยกับคุณได้อย่างตรงไปตรงมา",
+                        "สามารถขอความช่วยเหลือและสนับสนุนความคิดสร้างสรรค์ร่วมกับคุณได้อย่างสบายใจ"
+                    ]
+                };
+            } else if (overallPercent <= 50) {
+                evalData = {
+                    level: "มีพฤติกรรมท็อกซิกเล็กน้อยถึงปานกลาง (Mild to Moderate Toxicity)",
+                    badgeClass: "bg-amber-100 text-amber-800 border-amber-200",
+                    circleBg: "border-amber-500 text-amber-600",
+                    bannerBg: "bg-amber-50/50 border-amber-200",
+                    desc: "คุณอาจมีบางพฤติกรรมที่สร้างความอึดอัดให้ผู้อื่นโดยไม่รู้ตัว เช่น การใช้อารมณ์ประชดประชัน การเผลอเอาตัวเองเป็นศูนย์กลาง หรือการเอาชนะในวงสนทนา ควรเริ่มสังเกตและปรับปรุง",
+                    selfActions: [
+                        "ฝึกใช้เทคนิค 'หยุดคิด 3 วินาที' ก่อนจะพูดจาประชดหรือขัดจังหวะผู้อื่น",
+                        "ฝึกยอมรับข้อผิดพลาดของตนเอง และกล่าวคำว่า 'ขอโทษ' อย่างตรงไปตรงมาเมื่อทำผิด",
+                        "ระมัดระวังการก้าวก่ายเรื่องส่วนตัวหรือการวิจารณ์ผู้อื่นโดยไม่จำเป็น"
+                    ],
+                    othersActions: [
+                        "เตือนสติหรือบอกความรู้สึกตรงๆ เมื่อคุณเริ่มใช้น้ำเสียงแซะหรือใช้อารมณ์ (เช่น 'เราอึดอัดเวลาใช้น้ำเสียงแบบนี้')",
+                        "ตั้งขอบเขตเรื่องเวลาและเรื่องส่วนตัวกับคุณอย่างชัดเจน"
+                    ]
+                };
+            } else if (overallPercent <= 75) {
+                evalData = {
+                    level: "มีพฤติกรรมท็อกซิกสูงต่อคนรอบข้าง (High Social Toxicity)",
+                    badgeClass: "bg-orange-100 text-orange-800 border-orange-200",
+                    circleBg: "border-orange-500 text-orange-600",
+                    bannerBg: "bg-orange-50/50 border-orange-200",
+                    desc: "พฤติกรรมของคุณเริ่มส่งผลกระทบและบั่นทอนคนรอบข้างอย่างชัดเจน มีแนวโน้มชอบควบคุม โยนความผิด ขาดความเห็นอกเห็นใจ หรือทำให้เพื่อนร่วมงาน/ครอบครัวรู้สึกเหนื่อยล้าทางจิตใจ",
+                    selfActions: [
+                        "ยอมรับอย่างจริงจังว่าพฤติกรรมควบคุมหรือใช้อารมณ์กำลังทำให้คนรอบข้างถอยห่าง",
+                        "ฝึกความเห็นอกเห็นใจ (Empathy Practice) โดยลองตั้งคำถามว่า 'ถ้าเราถูกทำแบบนี้ เราจะรู้สึกอย่างไร?'",
+                        "พิจารณาปรึกษานักจิตวิทยาเพื่อเรียนรู้การจัดการอารมณ์และปมความต้องการควบคุม"
+                    ],
+                    othersActions: [
+                        "ตั้งเส้นขอบเขตที่แข็งแรง (Hard Boundaries) ไม่ยินยอมให้คุณข่มขู่หรือบีบบังคับ",
+                        "เว้นระยะห่างทางอารมณ์ (Emotional Distance) และสื่อสารเฉพาะเรื่องที่จำเป็น"
+                    ]
+                };
+            } else {
+                evalData = {
+                    level: "มีพฤติกรรมท็อกซิกขั้นรุนแรง (Severe Toxicity / Anti-social Tendency)",
+                    badgeClass: "bg-rose-100 text-rose-800 border-rose-200",
+                    circleBg: "border-rose-600 text-rose-600",
+                    bannerBg: "bg-rose-50/60 border-rose-200",
+                    desc: "พฤติกรรมเข้าขั้นบั่นทอนและทำร้ายจิตใจผู้อื่นอย่างรุนแรง มีการใช้อำนาจ บงการ ละเมิดสิทธิ์ หรือทำลายความสัมพันธ์รอบข้างอย่างต่อเนื่อง ควรเข้าพบผู้เชี่ยวชาญด้านจิตวิทยาเพื่อเร่งแก้ไข",
+                    selfActions: [
+                        "เข้ารับการปรึกษาด้านจิตวิทยาหรือการปรับพฤติกรรม (Psychotherapy / Behavioral Therapy) โดยด่วน",
+                        "หยุดพฤติกรรมบีบบังคับ นินทา หรือใช้ประโยชน์จากผู้อื่นทันที",
+                        "ทบทวนและยอมรับผลกระทบทางสังคมที่คุณก่อขึ้นต่อผู้อื่นอย่างตรงไปตรงมา"
+                    ],
+                    othersActions: [
+                        "จำกัดการปฏิสัมพันธ์และปกป้องความปลอดภัยทางอารมณ์/ร่างกายของตนเองเป็นหลัก",
+                        "ปฏิเสธการถูกบงการทุกรูปแบบ และหาบุคคลที่สามมาช่วยไกล่เกลี่ยเมื่อต้องทำงานร่วมกัน"
+                    ]
+                };
+            }
+
+            // Render Banner Details
+            const levelBadge = document.getElementById('levelBadge');
+            levelBadge.className = `inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${evalData.badgeClass}`;
+            levelBadge.innerText = evalData.level;
+
+            document.getElementById('levelTitle').innerText = evalData.level;
+            document.getElementById('levelDesc').innerText = evalData.desc;
+
+            const scoreCircleBg = document.getElementById('scoreCircleBg');
+            scoreCircleBg.className = `w-28 h-28 sm:w-32 sm:h-32 rounded-full flex flex-col items-center justify-center text-center shadow-inner border-4 bg-white ${evalData.circleBg}`;
+
+            const scoreBanner = document.getElementById('scoreBanner');
+            scoreBanner.className = `rounded-2xl p-6 flex flex-col sm:flex-row items-center gap-6 border ${evalData.bannerBg}`;
+
+            // Render Action Lists
+            document.getElementById('selfActionList').innerHTML = evalData.selfActions.map(act => `<li>${act}</li>`).join('');
+            document.getElementById('othersActionList').innerHTML = evalData.othersActions.map(act => `<li>${act}</li>`).join('');
+
+            // Category Progress Bars Breakdown
+            const breakdownContainer = document.getElementById('categoryBreakdown');
+            breakdownContainer.innerHTML = '';
+
+            quizCategories.forEach(cat => {
+                const catScore = categoryScores[cat.id];
+                const catMax = categoryMax[cat.id];
+                const catPercent = Math.round((catScore / catMax) * 100);
+
+                let barColor = "bg-emerald-500";
+                if (catPercent > 70) barColor = "bg-rose-600";
+                else if (catPercent > 45) barColor = "bg-amber-500";
+
+                const row = document.createElement('div');
+                row.className = "space-y-1";
+                row.innerHTML = `
+                    <div class="flex justify-between text-xs sm:text-sm font-semibold text-slate-700">
+                        <span>${cat.id}. ${cat.name}</span>
+                        <span class="font-bold">${catPercent}% (${catScore}/${catMax})</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200/60">
+                        <div class="${barColor} h-2.5 rounded-full transition-all duration-500" style="width: ${catPercent}%"></div>
+                    </div>
+                `;
+                breakdownContainer.appendChild(row);
+            });
+
+            // Transition Screens
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('quizProgressText').innerText = "ประมวลผลเสร็จสิ้น";
+            document.getElementById('progressBar').style.width = "100%";
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function retakeQuiz() {
+            document.getElementById('quizForm').reset();
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            document.getElementById('progressBar').style.width = "0%";
+            document.getElementById('quizProgressText').innerText = "พร้อมเริ่มประเมินตนเอง";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ==========================================================================
+           4. PDF EXPORT LOGIC
+           ========================================================================== */
+        function exportToPDF() {
+            const pdfBtn = document.getElementById('pdfExportBtn');
+            const originalText = pdfBtn.innerHTML;
+
+            pdfBtn.disabled = true;
+            pdfBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>กำลังสร้าง PDF...</span>`;
+
+            const element = document.getElementById('pdfReportContent');
+            
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `PSTI_Social_Toxicity_Report_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                pdfBtn.disabled = false;
+                pdfBtn.innerHTML = originalText;
+            }).catch(err => {
+                console.error("PDF Export error:", err);
+                pdfBtn.disabled = false;
+                pdfBtn.innerHTML = originalText;
+            });
+        }
+    </script>
 </body>
 </html>
+```
