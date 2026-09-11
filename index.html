@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แบบประเมินดัชนีความสัมพันธ์และระดับ Toxicity</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Sarabun', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        h1 { text-align: center; color: var(--primary); margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #64748b; margin-bottom: 30px; font-size: 0.95rem; }
+
+        .question-card {
+            margin-bottom: 24px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .question-title { font-weight: 600; margin-bottom: 12px; }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .option-label:hover { border-color: var(--primary); background: #f0fdf4; }
+
+        button.btn-submit {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background 0.2s;
+        }
+
+        button.btn-submit:hover { background: #4f46e5; }
+
+        .result-container { display: none; }
+        .score-badge {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .section-box {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border-left: 4px solid var(--primary);
+        }
+
+        .stat-number { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="quiz-screen">
+        <h1>แบบประเมินดัชนีความท็อกซิก (Relationship Toxicity Index)</h1>
+        <p class="subtitle">คำถาม 25 ข้อ ครอบคลุมพฤติกรรม บรรยากาศ และโครงสร้างความสัมพันธ์</p>
+        <form id="quizForm">
+            <div id="questionsContainer"></div>
+            <button type="submit" class="btn-submit">ส่งแบบสอบถามและประมวลผล</button>
+        </form>
+    </div>
+
+    <div id="result-screen" class="result-container">
+        <h1>ผลการประเมินดัชนีความท็อกซิก</h1>
+        <div class="score-badge" id="scoreDisplay">0%</div>
+        
+        <div class="section-box">
+            <h2>ระดับความท็อกซิกของคุณ: <span id="levelDisplay">-</span></h2>
+            <p id="descriptionDisplay"></p>
+        </div>
+
+        <div class="section-box">
+            <h3>คำแนะนำและแนวทางแก้ไขรับมือ</h3>
+            <ul id="adviceList"></ul>
+        </div>
+
+        <div class="section-box">
+            <h3>ข้อปฏิบัติสำหรับคู่รักที่เป็น "คนที่ดี/สายซัพพอร์ต"</h3>
+            <ul id="goodPartnerList"></ul>
+        </div>
+
+        <div class="section-box">
+            <h3>สถิติความสัมพันธ์ของวัยรุ่นในปัจจุบัน (Gen Z & Alpha)</h3>
+            <p>ข้อมูลสถิติด้านความสัมพันธ์ทางสังคมในกลุ่มวัยรุ่น:</p>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">69%</div>
+                    <div>เคยพบเจอปัญหา Digital Controlling (ตรวจโทรศัพท์/ตาม GPS)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1 ใน 3</div>
+                    <div>วัยรุ่นเคยเผชิญสภาวะ Emotional Abuse ในความสัมพันธ์</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">48%</div>
+                    <div>ลังเลที่จะเลิกราเพราะกลัวการถูกแบล็กเมลทางโซเชียล</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-box" style="font-size: 0.85rem; color: #475569;">
+            <h3>หลักฐานอ้างอิงอิงตามงานวิจัย (Academic References)</h3>
+            <ol>
+                <li><strong>Gottman, J. M., & Silver, N. (2015).</strong> <i>The Seven Principles for Making Marriage Work.</i> (หลักการวิเคราะห์ The Four Horsemen)</li>
+                <li><strong>Centers for Disease Control and Prevention (CDC). (2023).</strong> <i>Preventing Teen Dating Violence: Fast Facts.</i></li>
+                <li><strong>Pew Research Center. (2020).</strong> <i>Teens, Technology and Romantic Relationships.</i></li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+const questions = [
+    // หมวด 1: การควบคุมและการขีดเส้น (Controlling & Boundaries)
+    "มีการพยายามตรวจสอบโทรศัพท์ ข้อความ หรือตำแหน่ง GPS ของคุณโดยไม่ได้รับยินยอมหรือไม่?",
+    "คู่ของคุณพยายามตัดคุณออกจากเพื่อน ฝูง หรือครอบครัวหรือไม่?",
+    "คุณต้องขออนุญาตก่อนจะออกไปทำกิจกรรมส่วนตัวหรือไม่?",
+    "มีการใช้คำพูดบีบบังคับให้คุณแต่งกายหรือวางตัวตามที่เขาต้องการหรือไม่?",
+    "คุณรู้สึกว่าไม่มีอิสระในการตัดสินใจเรื่องสำคัญของตัวเองหรือไม่?",
+    
+    // หมวด 2: การสื่อสารและการจัดการความขัดแย้ง (Communication & Conflict)
+    "เมื่อมีความเห็นไม่ตรงกัน มีการใช้เงียบใส่ (Silent Treatment) เป็นเวลานานเพื่อลงโทษหรือไม่?",
+    "มีการใช้อารมณ์ ตะคอก หรือใช้คำพูดบั่นทอนคุณค่าตัวตนของคุณหรือไม่?",
+    "คู่ของคุณเคยปฏิเสธความรับผิดชอบ และโยนความผิดทั้งหมดมาให้คุณ (Gaslighting) หรือไม่?",
+    "เมื่อเกิดปัญหา มักจะขู่ว่าจะเลิกราหรือทำร้ายตัวเองเพื่อรั้งคุณไว้หรือไม่?",
+    "คุณรู้สึกว่าต้องคอย 'เดินบนเปลือกไข่' (ระวังคำพูดตลอดเวลา) เมื่ออยู่ใกล้เขาหรือไม่?",
+
+    // หมวด 3: อารมณ์และความรู้สึกปลอดภัย (Emotional Safety)
+    "ความสัมพันธ์นี้ทำให้คุณรู้สึกเหนื่อยล้าทางจิตใจมากกว่ามีความสุขหรือไม่?",
+    "คุณรู้สึกว่าต้องปิดบังความรู้สึกที่แท้จริงเพราะกลัวอีกฝ่ายจะหงุดหงิดหรือไม่?",
+    "คู่ของคุณมีอารมณ์สวิงแปรปรวนจนคุณคาดเดาไม่ได้หรือไม่?",
+    "มีความหึงหวงที่รุนแรงเกินกว่าเหตุในชีวิตประจำวันหรือไม่?",
+    "คุณรู้สึกว่าตัวเองสูญเสียตัวตนและความมั่นใจตั้งแต่คบกันหรือไม่?",
+
+    // หมวด 4: การสนับสนุนและการให้เกียรติ (Respect & Support)
+    "คู่ของคุณด้อยค่าความสำเร็จหรือเป้าหมายในชีวิตของคุณหรือไม่?",
+    "มีความไม่เท่าเทียมในการเสียสละ (คุณเป็นฝ่ายยอมอยู่ตลอดเวลา) หรือไม่?",
+    "คู่ของคุณใช้ประโยชน์จากคุณในเรื่องเงิน ความช่วยเหลือ หรือความสะดวกส่วนตัวหรือไม่?",
+    "เมื่อคุณต้องการกำลังใจ อีกฝ่ายมักเฉยชาหรือไม่ใส่ใจหรือไม่?",
+    "มีความไม่ละอายในการประจานหรือทำให้คุณอับอายต่อหน้าผู้อื่นหรือไม่?",
+
+    // หมวด 5: สัญญาณความเสี่ยงขั้นรุนแรง (Red Flags)
+    "มีการทำลายสิ่งของ ทำร้ายตัวเอง หรือข่มขู่ว่าจะใช้กำลังหรือไม่?",
+    "มีการบังคับหรือกดดันให้ทำกิจกรรมทางเพศที่คุณไม่ยินยอมหรือไม่?",
+    "คุณรู้สึกกลัวความปลอดภัยของตัวเองหากคิดจะเลิกราหรือไม่?",
+    "มีการสะกดรอยตาม (Stalking) หรือก่อกวนเมื่อคุณขอพื้นที่ส่วนตัวหรือไม่?",
+    "สัญชาตญาณลึกๆ บอกคุณว่าความสัมพันธ์นี้พิษร้ายต่อชีวิตคุณหรือไม่?"
+];
+
+const choices = [
+    { label: "ไม่เคยเลย", score: 0 },
+    { label: "นานๆ ครั้ง", score: 1 },
+    { label: "ปานกลาง", score: 2 },
+    { label: "บ่อยครั้ง", score: 3 },
+    { label: "เป็นประจำ", score: 4 }
+];
+
+// สร้างคำถามลง HTML
+const container = document.getElementById('questionsContainer');
+questions.forEach((q, index) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    
+    let optionsHtml = choices.map((c, cIndex) => `
+        <label class="option-label">
+            <input type="radio" name="q${index}" value="${c.score}" required>
+            ${c.label}
+        </label>
+    `).join('');
+
+    card.innerHTML = `
+        <div class="question-title">${index + 1}. ${q}</div>
+        <div class="options">${optionsHtml}</div>
+    `;
+    container.appendChild(card);
+});
+
+// คำนวณผลลัพธ์
+document.getElementById('quizForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    let totalScore = 0;
+    const maxScore = questions.length * 4; // 25 * 4 = 100
+
+    for (let i = 0; i < questions.length; i++) {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected) {
+            totalScore += parseInt(selected.value);
+        }
+    }
+
+    const percentage = Math.round((totalScore / maxScore) * 100);
+    showResult(percentage);
+});
+
+function showResult(percentage) {
+    document.getElementById('quiz-screen').style.display = 'none';
+    const resultScreen = document.getElementById('result-screen');
+    resultScreen.style.display = 'block';
+
+    document.getElementById('scoreDisplay').innerText = `${percentage}%`;
+
+    let level = "";
+    let desc = "";
+    let advice = [];
+    let goodPartner = [];
+
+    if (percentage <= 20) {
+        level = "ความสัมพันธ์สุขภาพดี (Healthy Relationship)";
+        desc = "ความสัมพันธ์ของคุณมีความปลอดภัย ให้เกียรติซึ่งกันและกัน มีการสื่อสารที่ดีเป็นพื้นฐาน";
+        advice = [
+            "รักษาการสื่อสารที่เปิดเผยและจริงใจต่อไป",
+            "หมั่นเติมความหวานและรับฟังความต้องการของกันและกันเสมอ"
+        ];
+        goodPartner = [
+            "สนับสนุนเป้าหมายส่วนตัวของคู่ของคุณต่อไป",
+            "เคารพพื้นที่ส่วนตัวและรักษาขอบเขตความสัมพันธ์ที่ดี"
+        ];
+    } else if (percentage <= 50) {
+        level = "เริ่มมีสัญญาณเตือน (Mild to Moderate Toxicity)";
+        desc = "มีความขัดแย้งและการควบคุมบางอย่างซ่อนอยู่ ควรเร่งปรับปรุงก่อนจะสะสมเป็นปัญหาระยะยาว";
+        advice = [
+            "ตั้งเป้าหมายในการสื่อสารแบบ Non-violent Communication (ไม่ใช้อารมณ์/คำพูดบั่นทอน)",
+            "กำหนดขอบเขต (Boundaries) ของตัวเองให้ชัดเจน และกล้าปฏิเสธในสิ่งที่ไม่สะดวกใจ"
+        ];
+        goodPartner = [
+            "เปิดใจรับฟังเมื่อคู่ของคุณสะท้อนความรู้สึก โดยไม่พูดแทรกหรือตั้งการ์ดป้องกันตัว",
+            "แสดงความรับผิดชอบเมื่อทำผิดพลาด และปรับปรุงพฤติกรรมอย่างจริงจัง"
+        ];
+    } else if (percentage <= 75) {
+        level = "ระดับความท็อกซิกสูง (High Toxicity)";
+        desc = "ความสัมพันธ์นี้เริ่มส่งผลเสียต่อสุขภาพจิตและการดำเนินชีวิตของคุณ มีการพยายามควบคุมและบั่นทอนสูง";
+        advice = [
+            "พิจารณาเข้าพบผู้เชี่ยวชาญด้านจิตวิทยาคู่รัก (Couple Therapy)",
+            "ประเมินว่าคู่ของคุณพร้อมจะเปลี่ยนพฤติกรรมหรือไม่ หากไม่เปลี่ยนแปลง ควรเตรียมแผนถอยห่าง",
+            "กลับมาสร้างเครือข่ายความซัพพอร์ตจากเพื่อนและครอบครัว"
+        ];
+        goodPartner = [
+            "ตระหนักรู้อย่างจริงจังว่าพฤติกรรมควบคุมหรือใช้อารมณ์กำลังทำลายคนที่คุณรัก",
+            "เข้ารับการรับปรึกษาทางจิตวิทยาส่วนบุคคลเพื่อจัดการอารมณ์ตนเอง"
+        ];
+    } else {
+        level = "ระดับอันตราย/ท็อกซิกขั้นรุนแรง (Severe Toxicity / Abusive)";
+        desc = "ความสัมพันธ์มีแนวโน้มเข้าข่ายการทำร้ายทางจิตใจหรือร่างกาย สูญเสียความปลอดภัยในชีวิต";
+        advice = [
+            "ลำดับความสำคัญแรกคือความปลอดภัยทางกายและจิตใจของคุณเอง",
+            "วางแผนถอนตัว (Safety Exit Plan) อย่างเงียบๆ และขอความช่วยเหลือจากคนที่ไว้วางใจได้",
+            "ปรึกษาหน่วยงานช่วยเหลือทางสังคมหรือนักจิตวิทยาโดยด่วน"
+        ];
+        goodPartner = [
+            "หยุดพฤติกรรมข่มขู่หรือบังคับควบคุมทันที",
+            "ยอมรับการแยกทางหากอีกฝ่ายต้องการ เพื่อความปลอดภัยและสุขภาวะของทั้งสองฝ่าย"
+        ];
+    }
+
+    document.getElementById('levelDisplay').innerText = level;
+    document.getElementById('descriptionDisplay').innerText = desc;
+
+    const adviceList = document.getElementById('adviceList');
+    adviceList.innerHTML = advice.map(item => `<li>${item}</li>`).join('');
+
+    const goodPartnerList = document.getElementById('goodPartnerList');
+    goodPartnerList.innerHTML = goodPartner.map(item => `<li>${item}</li>`).join('');
+}
+</script>
+
+</body>
+</html>
